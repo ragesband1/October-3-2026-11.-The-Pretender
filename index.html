@@ -1,0 +1,3194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11. The Pretender</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #070a12;
+    color: white;
+}
+
+button {
+    font-family: inherit;
+}
+
+#game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 20%, #243b5d 0%, #111b2c 35%, #060912 80%);
+}
+
+/* =========================
+   WORLD
+========================= */
+
+#world {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    perspective: 1000px;
+}
+
+#sky {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            to bottom,
+            #101b38 0%,
+            #27496d 38%,
+            #6796a5 60%,
+            #334c37 100%
+        );
+}
+
+.sun {
+    position: absolute;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: #ffd76a;
+    box-shadow: 0 0 70px #ffd76a;
+    top: 9%;
+    right: 14%;
+    opacity: .8;
+}
+
+.cloud {
+    position: absolute;
+    width: 170px;
+    height: 45px;
+    border-radius: 50px;
+    background: rgba(255,255,255,.13);
+    filter: blur(3px);
+}
+
+.cloud::before,
+.cloud::after {
+    content: "";
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+
+.cloud::before {
+    width: 70px;
+    height: 70px;
+    left: 25px;
+    top: -25px;
+}
+
+.cloud::after {
+    width: 90px;
+    height: 90px;
+    right: 20px;
+    top: -40px;
+}
+
+.c1 {
+    top: 18%;
+    left: 7%;
+}
+
+.c2 {
+    top: 29%;
+    right: 32%;
+    transform: scale(.7);
+}
+
+#terrain {
+    position: absolute;
+    left: -10%;
+    top: 42%;
+    width: 120%;
+    height: 80%;
+    transform: rotateX(52deg);
+    transform-origin: center top;
+    background:
+        linear-gradient(135deg, transparent 24%, rgba(255,255,255,.03) 25%, transparent 26%),
+        linear-gradient(45deg, transparent 24%, rgba(255,255,255,.025) 25%, transparent 26%),
+        #315437;
+    background-size: 100px 100px;
+    border-top: 5px solid rgba(255,255,255,.12);
+}
+
+.road {
+    position: absolute;
+    width: 85%;
+    height: 55px;
+    left: 8%;
+    top: 60%;
+    transform: rotate(-9deg);
+    background: #6b573e;
+    border: 3px solid #8b7352;
+    box-shadow: 0 0 20px rgba(0,0,0,.4);
+}
+
+.road2 {
+    position: absolute;
+    width: 55%;
+    height: 45px;
+    left: 30%;
+    top: 70%;
+    transform: rotate(17deg);
+    background: #665039;
+    border: 3px solid #8b7352;
+}
+
+/* Buildings */
+
+.building {
+    position: absolute;
+    width: 150px;
+    height: 105px;
+    background: #70462e;
+    border: 4px solid #3b261c;
+    box-shadow: 15px 20px 0 rgba(0,0,0,.25);
+    transform: skewY(-3deg);
+}
+
+.building::before {
+    content: "";
+    position: absolute;
+    width: 170px;
+    height: 60px;
+    left: -14px;
+    top: -43px;
+    background: #a84938;
+    clip-path: polygon(50% 0,100% 100%,0 100%);
+}
+
+.building .window {
+    position: absolute;
+    width: 30px;
+    height: 35px;
+    background: #80c4dc;
+    border: 4px solid #2a2421;
+    bottom: 22px;
+    left: 24px;
+}
+
+.building .door {
+    position: absolute;
+    width: 32px;
+    height: 55px;
+    background: #241817;
+    bottom: 0;
+    right: 22px;
+}
+
+.school {
+    left: 19%;
+    top: 47%;
+    transform: scale(1.2);
+}
+
+.hall {
+    left: 62%;
+    top: 52%;
+    transform: scale(.9);
+}
+
+.tree {
+    position: absolute;
+    width: 30px;
+    height: 75px;
+    background: #51372a;
+    border-radius: 10px;
+}
+
+.tree::before {
+    content: "";
+    position: absolute;
+    width: 85px;
+    height: 85px;
+    background: #1e6b42;
+    border-radius: 50%;
+    left: -27px;
+    top: -50px;
+    box-shadow:
+        25px -15px 0 #26784a,
+        -20px -10px 0 #287d4b;
+}
+
+.t1 { left: 8%; top: 54%; }
+.t2 { left: 46%; top: 45%; transform: scale(.7); }
+.t3 { left: 83%; top: 58%; transform: scale(1.1); }
+.t4 { left: 36%; top: 76%; transform: scale(.8); }
+.t5 { left: 73%; top: 76%; transform: scale(.75); }
+
+/* =========================
+   PLAYER
+========================= */
+
+#player {
+    position: absolute;
+    width: 44px;
+    height: 72px;
+    left: 50%;
+    top: 66%;
+    transform: translate(-50%, -50%);
+    z-index: 30;
+    transition: transform .05s linear;
+}
+
+.player-shadow {
+    position: absolute;
+    width: 55px;
+    height: 17px;
+    left: -6px;
+    bottom: -5px;
+    background: rgba(0,0,0,.45);
+    border-radius: 50%;
+}
+
+.player-body {
+    position: absolute;
+    width: 30px;
+    height: 38px;
+    left: 7px;
+    top: 23px;
+    background: #2670a8;
+    border: 3px solid #152d45;
+    border-radius: 7px 7px 4px 4px;
+}
+
+.player-head {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    left: 8px;
+    top: 0;
+    background: #e7b27c;
+    border-radius: 50%;
+    border: 3px solid #4b2d22;
+}
+
+.player-head::before {
+    content: "";
+    position: absolute;
+    width: 31px;
+    height: 13px;
+    left: -4px;
+    top: -5px;
+    background: #282027;
+    border-radius: 50% 50% 20% 20%;
+}
+
+.player-arm {
+    position: absolute;
+    width: 10px;
+    height: 30px;
+    top: 26px;
+    background: #e7b27c;
+    border: 2px solid #4b2d22;
+    border-radius: 8px;
+}
+
+.arm1 { left: 0; transform: rotate(12deg); }
+.arm2 { right: 0; transform: rotate(-12deg); }
+
+.player-leg {
+    position: absolute;
+    width: 11px;
+    height: 28px;
+    background: #252c3b;
+    bottom: -17px;
+    border-radius: 5px;
+}
+
+.leg1 { left: 7px; }
+.leg2 { right: 7px; }
+
+/* =========================
+   NPCS
+========================= */
+
+.npc {
+    position: absolute;
+    width: 48px;
+    height: 70px;
+    z-index: 20;
+    cursor: pointer;
+}
+
+.npc .head {
+    position: absolute;
+    width: 27px;
+    height: 27px;
+    left: 10px;
+    top: 0;
+    border-radius: 50%;
+    background: #dba679;
+    border: 3px solid #40271f;
+}
+
+.npc .body {
+    position: absolute;
+    width: 32px;
+    height: 38px;
+    left: 8px;
+    top: 25px;
+    border-radius: 8px;
+    background: #9a4b76;
+    border: 3px solid #3c2432;
+}
+
+.npc .label {
+    position: absolute;
+    top: -27px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 0 2px 3px black;
+}
+
+#mirjah {
+    left: 38%;
+    top: 50%;
+}
+
+#jaba {
+    left: 55%;
+    top: 56%;
+}
+
+#schen {
+    left: 70%;
+    top: 62%;
+}
+
+#dejavu {
+    left: 77%;
+    top: 46%;
+}
+
+#mencock {
+    left: 24%;
+    top: 61%;
+}
+
+#levshnok {
+    left: 49%;
+    top: 53%;
+}
+
+#teacher {
+    left: 12%;
+    top: 43%;
+}
+
+/* =========================
+   UI
+========================= */
+
+#topbar {
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    top: 15px;
+    height: 74px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+#titleBox {
+    min-width: 250px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: rgba(7,10,18,.84);
+    border: 1px solid rgba(255,255,255,.2);
+    backdrop-filter: blur(10px);
+}
+
+#titleBox .gameTitle {
+    font-size: 20px;
+    font-weight: 900;
+}
+
+#titleBox .chapter {
+    color: #ffc857;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.statBox {
+    min-width: 150px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: rgba(7,10,18,.8);
+    border: 1px solid rgba(255,255,255,.16);
+}
+
+.statText {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.bar {
+    height: 8px;
+    width: 100%;
+    background: #202634;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    width: 100%;
+    transition: width .2s;
+}
+
+.hp {
+    background: #e94c4c;
+}
+
+.xp {
+    background: #54a8ff;
+}
+
+.mp {
+    background: #a46bff;
+}
+
+/* Quest panel */
+
+#questPanel {
+    position: absolute;
+    z-index: 100;
+    top: 105px;
+    left: 15px;
+    width: 300px;
+    padding: 15px;
+    border-radius: 14px;
+    background: rgba(7,10,18,.84);
+    border: 1px solid rgba(255,255,255,.15);
+    backdrop-filter: blur(10px);
+}
+
+#questPanel h3 {
+    margin: 0 0 8px;
+    color: #ffc857;
+}
+
+#questName {
+    font-weight: bold;
+}
+
+#questObjective {
+    font-size: 13px;
+    color: #cbd3e2;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Minimap */
+
+#minimap {
+    position: absolute;
+    z-index: 100;
+    right: 20px;
+    top: 105px;
+    width: 190px;
+    height: 150px;
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg, #294a36 25%, #375d43 25%, #375d43 50%, #294a36 50%);
+    background-size: 30px 30px;
+    border: 3px solid rgba(255,255,255,.5);
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,.4);
+}
+
+.map-road {
+    position: absolute;
+    height: 12px;
+    width: 220px;
+    background: #846d4d;
+    transform: rotate(-20deg);
+    top: 65px;
+    left: -20px;
+}
+
+.map-dot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.map-player {
+    background: #fff;
+    left: 90px;
+    top: 75px;
+    box-shadow: 0 0 8px white;
+}
+
+.map-mirjah { background: #ff8ac8; left: 65px; top: 53px; }
+.map-jaba { background: #ff8ac8; left: 104px; top: 66px; }
+.map-schen { background: #ffce54; left: 138px; top: 84px; }
+.map-dejavu { background: #ffce54; left: 150px; top: 49px; }
+.map-mencock { background: #ffce54; left: 42px; top: 87px; }
+
+/* Bottom controls */
+
+#controls {
+    position: absolute;
+    z-index: 100;
+    left: 20px;
+    bottom: 20px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    width: 380px;
+}
+
+.control {
+    min-width: 42px;
+    height: 40px;
+    padding: 0 13px;
+    border: 1px solid rgba(255,255,255,.25);
+    background: rgba(7,10,18,.85);
+    color: white;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.control:hover {
+    background: rgba(255,255,255,.16);
+}
+
+#actionBar {
+    position: absolute;
+    z-index: 100;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 9px;
+}
+
+.action {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,.25);
+    background: rgba(7,10,18,.9);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.action:hover {
+    border-color: #ffc857;
+    transform: translateY(-2px);
+}
+
+.action span {
+    display: block;
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 4px;
+}
+
+/* Dialog */
+
+#dialog {
+    display: none;
+    position: absolute;
+    z-index: 500;
+    left: 50%;
+    bottom: 105px;
+    transform: translateX(-50%);
+    width: min(720px, 90vw);
+    background: rgba(5,8,15,.95);
+    border: 2px solid #d5a747;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 15px 60px rgba(0,0,0,.6);
+}
+
+#dialogName {
+    color: #ffc857;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+#dialogText {
+    margin-top: 10px;
+    line-height: 1.6;
+    color: #e5e9f1;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#dialogButton {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background: #d69e2e;
+    border: 0;
+    border-radius: 8px;
+    color: #111;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Menus */
+
+.modal {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 800;
+    background: rgba(0,0,0,.68);
+    align-items: center;
+    justify-content: center;
+}
+
+.modalBox {
+    width: min(850px, 92vw);
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 25px;
+    border-radius: 18px;
+    background: #111722;
+    border: 1px solid #485366;
+    box-shadow: 0 20px 80px rgba(0,0,0,.7);
+}
+
+.modalBox h2 {
+    margin-top: 0;
+    color: #ffc857;
+}
+
+.closeBtn {
+    float: right;
+    border: 0;
+    background: #293244;
+    color: white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.inventoryGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px,1fr));
+    gap: 12px;
+}
+
+.item {
+    background: #1b2331;
+    border: 1px solid #39465b;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.item button,
+.skill button {
+    margin-top: 8px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: #426a9c;
+    color: white;
+    cursor: pointer;
+}
+
+.skillTree {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
+    gap: 15px;
+}
+
+.skill {
+    padding: 16px;
+    background: #1b2331;
+    border-radius: 12px;
+    border: 1px solid #39465b;
+}
+
+.skill.locked {
+    opacity: .45;
+}
+
+/* Start Screen */
+
+#startScreen {
+    position: absolute;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(circle at center, rgba(53,86,130,.45), transparent 50%),
+        #060912;
+}
+
+.startBox {
+    width: min(800px, 92vw);
+    padding: 45px;
+    text-align: center;
+    border-radius: 25px;
+    background: rgba(10,15,25,.88);
+    border: 1px solid rgba(255,255,255,.2);
+    box-shadow: 0 30px 100px black;
+}
+
+.startBox h1 {
+    font-size: clamp(40px, 7vw, 80px);
+    margin: 0;
+    letter-spacing: 2px;
+    color: #ffc857;
+    text-shadow: 0 5px 20px rgba(255,200,87,.3);
+}
+
+.startBox h2 {
+    font-size: 20px;
+    font-weight: normal;
+    color: #aab5c7;
+}
+
+.startBox p {
+    line-height: 1.7;
+    color: #cdd5e2;
+}
+
+.startButton {
+    margin-top: 20px;
+    padding: 16px 45px;
+    font-size: 18px;
+    font-weight: bold;
+    border: 0;
+    border-radius: 12px;
+    background: #d69e2e;
+    color: #111;
+    cursor: pointer;
+}
+
+.startButton:hover {
+    background: #ffc857;
+    transform: translateY(-2px);
+}
+
+/* Notification */
+
+#notification {
+    position: absolute;
+    z-index: 700;
+    left: 50%;
+    top: 105px;
+    transform: translateX(-50%) translateY(-20px);
+    padding: 12px 20px;
+    background: rgba(8,11,19,.94);
+    border: 1px solid #d5a747;
+    border-radius: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: .3s;
+}
+
+#notification.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Combat enemy */
+
+.enemy {
+    position: absolute;
+    width: 55px;
+    height: 65px;
+    z-index: 25;
+    cursor: pointer;
+}
+
+.enemyBody {
+    position: absolute;
+    width: 42px;
+    height: 48px;
+    left: 7px;
+    top: 17px;
+    background: #8f2636;
+    border-radius: 50% 50% 25% 25%;
+    border: 3px solid #421520;
+}
+
+.enemyHead {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    left: 10px;
+    top: 0;
+    background: #522030;
+    border-radius: 50%;
+    border: 3px solid #1f1015;
+}
+
+.enemyHead::before,
+.enemyHead::after {
+    content: "";
+    position: absolute;
+    width: 7px;
+    height: 10px;
+    background: #ffcc50;
+    top: 12px;
+    border-radius: 50%;
+}
+
+.enemyHead::before { left: 7px; }
+.enemyHead::after { right: 7px; }
+
+.enemyHp {
+    position: absolute;
+    top: -16px;
+    left: 0;
+    width: 55px;
+    height: 6px;
+    background: #202020;
+}
+
+.enemyHpFill {
+    width: 100%;
+    height: 100%;
+    background: #e34c4c;
+}
+
+/* Combat overlay */
+
+#combat {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 600;
+    background: rgba(4,6,11,.72);
+    align-items: center;
+    justify-content: center;
+}
+
+.combatBox {
+    width: min(800px, 90vw);
+    background: #111722;
+    border: 2px solid #a8792f;
+    border-radius: 18px;
+    padding: 25px;
+}
+
+.combatTop {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.fighter {
+    width: 45%;
+}
+
+.fighter h3 {
+    color: #ffc857;
+}
+
+.combatBar {
+    height: 14px;
+    border-radius: 10px;
+    background: #272d38;
+    overflow: hidden;
+}
+
+.combatBar div {
+    height: 100%;
+    background: #e34c4c;
+}
+
+.combatLog {
+    height: 150px;
+    margin-top: 20px;
+    padding: 12px;
+    background: #090c13;
+    border-radius: 10px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.combatActions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.combatActions button {
+    padding: 11px 17px;
+    border-radius: 8px;
+    border: 1px solid #485366;
+    background: #202a3a;
+    color: white;
+    cursor: pointer;
+}
+
+.combatActions button:hover {
+    background: #34455e;
+}
+
+/* Responsive */
+
+@media(max-width:900px) {
+    #topbar {
+        flex-wrap: wrap;
+        height: auto;
+    }
+
+    #titleBox {
+        min-width: 190px;
+    }
+
+    .statBox {
+        min-width: 120px;
+    }
+
+    #questPanel {
+        top: 190px;
+        width: 240px;
+    }
+
+    #minimap {
+        top: 190px;
+        right: 10px;
+    }
+
+    #controls {
+        width: 300px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+    <!-- ================= WORLD ================= -->
+
+    <div id="world">
+
+        <div id="sky"></div>
+
+        <div class="sun"></div>
+        <div class="cloud c1"></div>
+        <div class="cloud c2"></div>
+
+        <div id="terrain"></div>
+
+        <div class="road"></div>
+        <div class="road2"></div>
+
+        <div class="building school">
+            <div class="window"></div>
+            <div class="door"></div>
+        </div>
+
+        <div class="building hall">
+            <div class="window"></div>
+            <div class="door"></div>
+        </div>
+
+        <div class="tree t1"></div>
+        <div class="tree t2"></div>
+        <div class="tree t3"></div>
+        <div class="tree t4"></div>
+        <div class="tree t5"></div>
+
+        <!-- NPCs -->
+
+        <div class="npc" id="mirjah" onclick="talk('Mirjah')">
+            <div class="label">Mirjah</div>
+            <div class="head"></div>
+            <div class="body"></div>
+        </div>
+
+        <div class="npc" id="jaba" onclick="talk('Jaba')">
+            <div class="label">Jaba</div>
+            <div class="head"></div>
+            <div class="body"></div>
+        </div>
+
+        <div class="npc" id="schen" onclick="talk('Schen')">
+            <div class="label">Schen</div>
+            <div class="head"></div>
+            <div class="body"></div>
+        </div>
+
+        <div class="npc" id="dejavu" onclick="talk('Dejavu')">
+            <div class="label">Dejavu</div>
+            <div class="head"></div>
+            <div class="body"></div>
+        </div>
+
+        <div class="npc" id="mencock" onclick="talk('Mencock')">
+            <div class="label">Mencock</div>
+            <div class="head"></div>
+            <div class="body"></div>
+        </div>
+
+        <div class="npc" id="levshnok" onclick="talk('Levshnok')">
+            <div class="label">Levshnok</div>
+            <div class="head"></div>
+            <div class="body"></div>
+        </div>
+
+        <div class="npc" id="teacher" onclick="talk('Teacher')">
+            <div class="label">Teacher</div>
+            <div class="head"></div>
+            <div class="body"></div>
+        </div>
+
+        <!-- Player -->
+
+        <div id="player">
+            <div class="player-shadow"></div>
+            <div class="player-head"></div>
+            <div class="player-body"></div>
+            <div class="player-arm arm1"></div>
+            <div class="player-arm arm2"></div>
+            <div class="player-leg leg1"></div>
+            <div class="player-leg leg2"></div>
+        </div>
+
+    </div>
+
+    <!-- ================= HUD ================= -->
+
+    <div id="topbar">
+
+        <div id="titleBox">
+            <div class="gameTitle">11. THE PRETENDER</div>
+            <div class="chapter">CHAPTER 3 • ZUMBAJUNG LEVSHNOK</div>
+        </div>
+
+        <div class="statBox">
+            <div class="statText">
+                <span>HP</span>
+                <span id="hpText">100 / 100</span>
+            </div>
+            <div class="bar">
+                <div id="hpBar" class="fill hp"></div>
+            </div>
+        </div>
+
+        <div class="statBox">
+            <div class="statText">
+                <span>XP</span>
+                <span id="xpText">0 / 100</span>
+            </div>
+            <div class="bar">
+                <div id="xpBar" class="fill xp"></div>
+            </div>
+        </div>
+
+        <div class="statBox">
+            <div class="statText">
+                <span>MP</span>
+                <span id="mpText">50 / 50</span>
+            </div>
+            <div class="bar">
+                <div id="mpBar" class="fill mp"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- QUEST -->
+
+    <div id="questPanel">
+        <h3>ACTIVE QUEST</h3>
+        <div id="questName">The Pretender</div>
+        <div id="questObjective">
+            Speak with Mirjah and Jaba about the friendship conflict.
+        </div>
+    </div>
+
+    <!-- MINIMAP -->
+
+    <div id="minimap">
+        <div class="map-road"></div>
+        <div class="map-dot map-player"></div>
+        <div class="map-dot map-mirjah"></div>
+        <div class="map-dot map-jaba"></div>
+        <div class="map-dot map-schen"></div>
+        <div class="map-dot map-dejavu"></div>
+        <div class="map-dot map-mencock"></div>
+    </div>
+
+    <!-- NOTIFICATION -->
+
+    <div id="notification"></div>
+
+    <!-- CONTROLS -->
+
+    <div id="controls">
+        <button class="control" onclick="move('up')">W ↑</button>
+        <button class="control" onclick="move('left')">A ←</button>
+        <button class="control" onclick="move('down')">S ↓</button>
+        <button class="control" onclick="move('right')">D →</button>
+        <button class="control" onclick="interact()">E INTERACT</button>
+    </div>
+
+    <!-- ACTION BAR -->
+
+    <div id="actionBar">
+        <button class="action" onclick="attackNearest()">
+            ⚔
+            <span>ATTACK</span>
+        </button>
+
+        <button class="action" onclick="openInventory()">
+            🎒
+            <span>ITEMS</span>
+        </button>
+
+        <button class="action" onclick="openSkills()">
+            ✦
+            <span>SKILLS</span>
+        </button>
+
+        <button class="action" onclick="showStory()">
+            📖
+            <span>STORY</span>
+        </button>
+
+        <button class="action" onclick="showStats()">
+            👤
+            <span>PLAYER</span>
+        </button>
+    </div>
+
+    <!-- ================= DIALOG ================= -->
+
+    <div id="dialog">
+        <div id="dialogName">Character</div>
+        <div id="dialogText"></div>
+        <button id="dialogButton" onclick="closeDialog()">Continue</button>
+    </div>
+
+    <!-- ================= INVENTORY ================= -->
+
+    <div id="inventoryModal" class="modal">
+        <div class="modalBox">
+            <button class="closeBtn" onclick="closeModal('inventoryModal')">X</button>
+
+            <h2>Inventory & Equipment</h2>
+
+            <div class="inventoryGrid">
+
+                <div class="item">
+                    <h3>Friendship Badge</h3>
+                    <p>Represents trust between companions.</p>
+                    <button onclick="useItem('Friendship Badge')">
+                        Equip
+                    </button>
+                </div>
+
+                <div class="item">
+                    <h3>School Notebook</h3>
+                    <p>Used to record clues and dialogue.</p>
+                    <button onclick="useItem('School Notebook')">
+                        Use
+                    </button>
+                </div>
+
+                <div class="item">
+                    <h3>Healing Potion</h3>
+                    <p>Restores 30 HP.</p>
+                    <button onclick="usePotion()">
+                        Drink
+                    </button>
+                </div>
+
+                <div class="item">
+                    <h3>Training Sword</h3>
+                    <p>Basic weapon. +10 Attack.</p>
+                    <button onclick="equipSword()">
+                        Equip
+                    </button>
+                </div>
+
+                <div class="item">
+                    <h3>Trust Crystal</h3>
+                    <p>A rare item representing honesty.</p>
+                    <button onclick="useItem('Trust Crystal')">
+                        Inspect
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= SKILLS ================= -->
+
+    <div id="skillsModal" class="modal">
+        <div class="modalBox">
+            <button class="closeBtn" onclick="closeModal('skillsModal')">X</button>
+
+            <h2>Progression & Skill Tree</h2>
+
+            <p>
+                Skill Points:
+                <strong id="skillPoints">0</strong>
+            </p>
+
+            <div class="skillTree">
+
+                <div class="skill">
+                    <h3>Honest Heart</h3>
+                    <p>Increase dialogue reputation.</p>
+                    <button onclick="buySkill('honest')">
+                        Learn
+                    </button>
+                </div>
+
+                <div class="skill">
+                    <h3>Quick Strike</h3>
+                    <p>Increase attack damage.</p>
+                    <button onclick="buySkill('attack')">
+                        Learn
+                    </button>
+                </div>
+
+                <div class="skill">
+                    <h3>Companion Bond</h3>
+                    <p>Reduce damage received from enemies.</p>
+                    <button onclick="buySkill('defense')">
+                        Learn
+                    </button>
+                </div>
+
+                <div class="skill">
+                    <h3>Hope</h3>
+                    <p>Chance to recover HP after completing quests.</p>
+                    <button onclick="buySkill('hope')">
+                        Learn
+                    </button>
+                </div>
+
+                <div class="skill">
+                    <h3>Scholar</h3>
+                    <p>Gain more XP from story events.</p>
+                    <button onclick="buySkill('scholar')">
+                        Learn
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= STORY ================= -->
+
+    <div id="storyModal" class="modal">
+        <div class="modalBox">
+            <button class="closeBtn" onclick="closeModal('storyModal')">X</button>
+
+            <h2>Chapter 3 — The Pretender</h2>
+
+            <p><strong>March 3, 2017</strong></p>
+
+            <p><strong>By Douglas Willats Wilamer</strong></p>
+
+            <p>
+                Once upon a time in the school of Zumbajung Levshnok,
+                Mirjah and Jaba has a mutual friends intention to Schen,
+                Dejavu, Mencock as long as when the section of Mecank is
+                deliberately make an argument Schen, Dejavu, Mencock
+                don’t want to be in companionship for Levshnok and Mirjah
+                because if Schen, Dejau, Mencock study very well without
+                Levshnok, Jaba and Mirjah they success their future.
+            </p>
+
+            <p>
+                When Mirjah and Levshnok and Jaba turn out a way they spy
+                their only pretend that they’re are close friends to each
+                other when they rejected to Schen, Dejavu an Mencock,
+                Levshnok, Jaba and Mirjah decided to reflect to them and
+                said if your thinking to accept friends it’s not pretend to
+                reject because that’s greed/selfish act to be deceitfulness
+                for having friends you mean you have a friend you still
+                reject their trust.
+            </p>
+
+            <p>
+                One day other behalf stated when it was heard by Schen,
+                Dejavu and Mencock they cry and pretend that is wasn’t
+                friends for Levshnok, Mirjah and Jaba second reflected to
+                them by Schen, Dejavu and Mirjah they think don’t pretend
+                friends is better in another hope otherwise you’ll not lose
+                hope.
+            </p>
+
+            <h3>Moral Lesson</h3>
+
+            <p>
+                If you have a gifted friend for companionship don’t pretend
+                that it’s doesn’t have faith because you will realized on
+                the other day it’s important to have a friend because its
+                helping to solve problems.
+            </p>
+        </div>
+    </div>
+
+    <!-- ================= PLAYER STATS ================= -->
+
+    <div id="statsModal" class="modal">
+        <div class="modalBox">
+            <button class="closeBtn" onclick="closeModal('statsModal')">X</button>
+
+            <h2>Player Character</h2>
+
+            <div class="inventoryGrid">
+
+                <div class="item">
+                    <h3>Name</h3>
+                    <p>The Pretender</p>
+                </div>
+
+                <div class="item">
+                    <h3>Level</h3>
+                    <p id="levelValue">1</p>
+                </div>
+
+                <div class="item">
+                    <h3>Class</h3>
+                    <p id="classValue">Companion</p>
+                </div>
+
+                <div class="item">
+                    <h3>Attack</h3>
+                    <p id="attackValue">15</p>
+                </div>
+
+                <div class="item">
+                    <h3>Defense</h3>
+                    <p id="defenseValue">5</p>
+                </div>
+
+                <div class="item">
+                    <h3>Reputation</h3>
+                    <p id="repValue">0</p>
+                </div>
+
+                <div class="item">
+                    <h3>Gold</h3>
+                    <p id="goldValue">100</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= COMBAT ================= -->
+
+    <div id="combat">
+
+        <div class="combatBox">
+
+            <div class="combatTop">
+
+                <div class="fighter">
+
+                    <h3>The Pretender</h3>
+
+                    <div class="combatBar">
+                        <div id="combatPlayerBar" style="width:100%;"></div>
+                    </div>
+
+                    <p id="combatPlayerHP">100 HP</p>
+
+                </div>
+
+                <div class="fighter">
+
+                    <h3 id="enemyName">Enemy</h3>
+
+                    <div class="combatBar">
+                        <div id="combatEnemyBar" style="width:100%;"></div>
+                    </div>
+
+                    <p id="combatEnemyHP">100 HP</p>
+
+                </div>
+
+            </div>
+
+            <div class="combatLog" id="combatLog"></div>
+
+            <div class="combatActions">
+
+                <button onclick="combatAttack()">
+                    ⚔ Attack
+                </button>
+
+                <button onclick="combatHeavyAttack()">
+                    💥 Heavy Attack
+                </button>
+
+                <button onclick="combatHeal()">
+                    ❤️ Heal
+                </button>
+
+                <button onclick="combatRun()">
+                    🏃 Run
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================= START SCREEN ================= -->
+
+    <div id="startScreen">
+
+        <div class="startBox">
+
+            <h1>11. THE PRETENDER</h1>
+
+            <h2>Chapter 3 — Zumbajung Levshnok</h2>
+
+            <p>
+                A story-driven 3D-style adventure about friendship,
+                rejection, trust, selfishness and hope.
+            </p>
+
+            <p>
+                Explore the school, speak with Mirjah, Jaba, Schen,
+                Dejavu, Mencock and Levshnok, complete quests,
+                discover the truth and face the enemies of distrust.
+            </p>
+
+            <button class="startButton" onclick="startGame()">
+                START CHAPTER
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+/* ============================================================
+   GAME DATA
+============================================================ */
+
+const game = {
+
+    started: false,
+
+    player: {
+        x: 50,
+        y: 66,
+
+        level: 1,
+
+        xp: 0,
+        xpNeeded: 100,
+
+        hp: 100,
+        maxHp: 100,
+
+        mp: 50,
+        maxMp: 50,
+
+        attack: 15,
+        defense: 5,
+
+        gold: 100,
+
+        reputation: 0,
+
+        skillPoints: 0,
+
+        class: "Companion",
+
+        equipment: {
+            weapon: "None",
+            badge: "None"
+        },
+
+        skills: {
+            honest: false,
+            attack: false,
+            defense: false,
+            hope: false,
+            scholar: false
+        }
+    },
+
+    questStage: 0,
+
+    talked: {
+        Mirjah: false,
+        Jaba: false,
+        Schen: false,
+        Dejavu: false,
+        Mencock: false,
+        Levshnok: false,
+        Teacher: false
+    },
+
+    combat: {
+        active: false,
+        enemy: null
+    }
+
+};
+
+
+/* ============================================================
+   START GAME
+============================================================ */
+
+function startGame() {
+
+    document.getElementById("startScreen").style.display = "none";
+
+    game.started = true;
+
+    notify("Chapter 3 started: The Pretender");
+
+    updateQuest();
+
+}
+
+
+/* ============================================================
+   MOVEMENT
+============================================================ */
+
+function move(direction) {
+
+    if (!game.started) return;
+
+    const speed = 2.5;
+
+    if (direction === "up") {
+        game.player.y -= speed;
+    }
+
+    if (direction === "down") {
+        game.player.y += speed;
+    }
+
+    if (direction === "left") {
+        game.player.x -= speed;
+    }
+
+    if (direction === "right") {
+        game.player.x += speed;
+    }
+
+    game.player.x = Math.max(8, Math.min(92, game.player.x));
+    game.player.y = Math.max(38, Math.min(88, game.player.y));
+
+    updatePlayerPosition();
+
+}
+
+
+function updatePlayerPosition() {
+
+    const player = document.getElementById("player");
+
+    player.style.left = game.player.x + "%";
+    player.style.top = game.player.y + "%";
+
+}
+
+
+/* ============================================================
+   KEYBOARD CONTROLS
+============================================================ */
+
+document.addEventListener("keydown", function(event) {
+
+    const key = event.key.toLowerCase();
+
+    if (key === "w" || key === "arrowup") {
+        move("up");
+    }
+
+    if (key === "s" || key === "arrowdown") {
+        move("down");
+    }
+
+    if (key === "a" || key === "arrowleft") {
+        move("left");
+    }
+
+    if (key === "d" || key === "arrowright") {
+        move("right");
+    }
+
+    if (key === "e") {
+        interact();
+    }
+
+    if (key === "i") {
+        openInventory();
+    }
+
+    if (key === "k") {
+        openSkills();
+    }
+
+    if (key === "q") {
+        showStory();
+    }
+
+});
+
+
+/* ============================================================
+   INTERACTION
+============================================================ */
+
+function interact() {
+
+    const npc = findNearestNPC();
+
+    if (!npc) {
+
+        notify("No character nearby.");
+
+        return;
+    }
+
+    talk(npc);
+
+}
+
+
+function findNearestNPC() {
+
+    const npcs = {
+
+        Mirjah: [38,50],
+        Jaba: [55,56],
+        Schen: [70,62],
+        Dejavu: [77,46],
+        Mencock: [24,61],
+        Levshnok: [49,53],
+        Teacher: [12,43]
+
+    };
+
+    let closest = null;
+
+    let distance = Infinity;
+
+    for (const name in npcs) {
+
+        const dx = game.player.x - npcs[name][0];
+        const dy = game.player.y - npcs[name][1];
+
+        const d = Math.sqrt(dx*dx + dy*dy);
+
+        if (d < distance) {
+
+            distance = d;
+            closest = name;
+
+        }
+
+    }
+
+    if (distance < 12) {
+        return closest;
+    }
+
+    return null;
+
+}
+
+
+/* ============================================================
+   NPC DIALOGUE
+============================================================ */
+
+const dialogue = {
+
+    Mirjah: [
+        "The situation with Schen, Dejavu and Mencock has become complicated.",
+        "Sometimes people pretend to be close because they are afraid of being rejected.",
+        "I don't want friendship to become a game of pretending.",
+        "Maybe we need to reflect on what friendship really means."
+    ],
+
+    Jaba: [
+        "We thought we were protecting our group.",
+        "But perhaps rejecting others only made the problem worse.",
+        "A friend should not have to prove that they deserve trust.",
+        "Maybe honesty is the only way forward."
+    ],
+
+    Schen: [
+        "We heard what was said about us.",
+        "It hurt because we thought we were friends.",
+        "We don't want fake friendship.",
+        "If friendship is real, people should be honest with each other."
+    ],
+
+    Dejavu: [
+        "I felt rejected.",
+        "For a moment I thought pretending that we were never friends would make it easier.",
+        "But that only created more pain.",
+        "There has to be another way."
+    ],
+
+    Mencock: [
+        "We want companionship, but not if it means pretending.",
+        "Friends should help each other solve problems.",
+        "Maybe we should talk instead of turning away."
+    ],
+
+    Levshnok: [
+        "I thought I understood what friendship meant.",
+        "Now I realize that rejecting someone's trust can hurt them deeply.",
+        "We need to decide whether we will continue pretending or tell the truth."
+    ],
+
+    Teacher: [
+        "Welcome to Zumbajung Levshnok.",
+        "Your task is not simply to win battles.",
+        "Your greatest challenge is understanding the people around you.",
+        "Remember: trust is something that must be earned and respected."
+    ]
+
+};
+
+
+function talk(name) {
+
+    if (!game.started) return;
+
+    const lines = dialogue[name];
+
+    if (!lines) return;
+
+    let index = 0;
+
+    const dialog = document.getElementById("dialog");
+
+    const nameBox = document.getElementById("dialogName");
+
+    const textBox = document.getElementById("dialogText");
+
+    const button = document.getElementById("dialogButton");
+
+    nameBox.textContent = name;
+
+    textBox.textContent = lines[index];
+
+    dialog.style.display = "block";
+
+    button.onclick = function() {
+
+        index++;
+
+        if (index >= lines.length) {
+
+            dialog.style.display = "none";
+
+            game.talked[name] = true;
+
+            gainXP(20);
+
+            game.player.reputation += 2;
+
+            checkQuestProgress();
+
+        } else {
+
+            textBox.textContent = lines[index];
+
+        }
+
+    };
+
+}
+
+
+function closeDialog() {
+
+    document.getElementById("dialog").style.display = "none";
+
+}
+
+
+/* ============================================================
+   QUEST SYSTEM
+============================================================ */
+
+function updateQuest() {
+
+    const name = document.getElementById("questName");
+
+    const objective = document.getElementById("questObjective");
+
+    if (game.questStage === 0) {
+
+        name.textContent = "The Pretender";
+
+        objective.textContent =
+            "Speak with Mirjah and Jaba about the friendship conflict.";
+
+    }
+
+    if (game.questStage === 1) {
+
+        name.textContent = "Broken Trust";
+
+        objective.textContent =
+            "Listen to Schen, Dejavu and Mencock.";
+
+    }
+
+    if (game.questStage === 2) {
+
+        name.textContent = "Reflection";
+
+        objective.textContent =
+            "Speak with Levshnok and discover why the group is divided.";
+
+    }
+
+    if (game.questStage === 3) {
+
+        name.textContent = "The Pretender";
+
+        objective.textContent =
+            "Return to the group and decide whether friendship should be based on honesty.";
+
+    }
+
+    if (game.questStage === 4) {
+
+        name.textContent = "Hope";
+
+        objective.textContent =
+            "Defeat the enemies of distrust and restore the Trust Crystal.";
+
+    }
+
+    if (game.questStage === 5) {
+
+        name.textContent = "Chapter Complete";
+
+        objective.textContent =
+            "You have learned the moral lesson of The Pretender.";
+
+    }
+
+}
+
+
+function checkQuestProgress() {
+
+    if (
+        game.questStage === 0 &&
+        game.talked.Mirjah &&
+        game.talked.Jaba
+    ) {
+
+        game.questStage = 1;
+
+        notify("Quest updated: Broken Trust");
+
+        updateQuest();
+
+    }
+
+    else if (
+        game.questStage === 1 &&
+        game.talked.Schen &&
+        game.talked.Dejavu &&
+        game.talked.Mencock
+    ) {
+
+        game.questStage = 2;
+
+        notify("Quest updated: Reflection");
+
+        updateQuest();
+
+    }
+
+    else if (
+        game.questStage === 2 &&
+        game.talked.Levshnok
+    ) {
+
+        game.questStage = 3;
+
+        notify("Quest updated: The Pretender");
+
+        updateQuest();
+
+    }
+
+    else if (
+        game.questStage === 3 &&
+        game.talked.Mirjah &&
+        game.talked.Jaba &&
+        game.talked.Levshnok
+    ) {
+
+        game.questStage = 4;
+
+        notify("Enemies of distrust have appeared!");
+
+        spawnEnemies();
+
+        updateQuest();
+
+    }
+
+}
+
+
+/* ============================================================
+   XP / LEVEL
+============================================================ */
+
+function gainXP(amount) {
+
+    if (game.player.skills.scholar) {
+        amount = Math.floor(amount * 1.25);
+    }
+
+    game.player.xp += amount;
+
+    notify("+" + amount + " XP");
+
+    while (game.player.xp >= game.player.xpNeeded) {
+
+        game.player.xp -= game.player.xpNeeded;
+
+        levelUp();
+
+    }
+
+    updateHUD();
+
+}
+
+
+function levelUp() {
+
+    game.player.level++;
+
+    game.player.skillPoints++;
+
+    game.player.maxHp += 15;
+
+    game.player.hp = game.player.maxHp;
+
+    game.player.maxMp += 5;
+
+    game.player.mp = game.player.maxMp;
+
+    game.player.attack += 3;
+
+    game.player.defense += 2;
+
+    game.player.xpNeeded += 50;
+
+    notify("LEVEL UP! Level " + game.player.level);
+
+    updateHUD();
+
+}
+
+
+/* ============================================================
+   ENEMIES
+============================================================ */
+
+let enemies = [];
+
+
+function spawnEnemies() {
+
+    const positions = [
+
+        [31,49],
+        [61,66],
+        [85,58],
+        [42,73]
+
+    ];
+
+    positions.forEach((pos,index) => {
+
+        const enemy = {
+
+            id: index,
+
+            x: pos[0],
+
+            y: pos[1],
+
+            hp: 60 + index * 20,
+
+            maxHp: 60 + index * 20,
+
+            name: index === 3
+                ? "Pretender Boss"
+                : "Shadow of Distrust"
+
+        };
+
+        enemies.push(enemy);
+
+        createEnemyElement(enemy);
+
+    });
+
+}
+
+
+function createEnemyElement(enemy) {
+
+    const el = document.createElement("div");
+
+    el.className = "enemy";
+
+    el.id = "enemy-" + enemy.id;
+
+    el.style.left = enemy.x + "%";
+
+    el.style.top = enemy.y + "%";
+
+    el.innerHTML = `
+
+        <div class="enemyHp">
+
+            <div
+                class="enemyHpFill"
+                id="enemyHp-${enemy.id}">
+            </div>
+
+        </div>
+
+        <div class="enemyHead"></div>
+
+        <div class="enemyBody"></div>
+
+    `;
+
+    el.onclick = function() {
+
+        startCombat(enemy);
+
+    };
+
+    document.getElementById("world").appendChild(el);
+
+}
+
+
+/* ============================================================
+   COMBAT
+============================================================ */
+
+function startCombat(enemy) {
+
+    if (game.combat.active) return;
+
+    game.combat.active = true;
+
+    game.combat.enemy = enemy;
+
+    document.getElementById("combat").style.display = "flex";
+
+    document.getElementById("enemyName").textContent = enemy.name;
+
+    combatLog(
+        "A battle begins against " +
+        enemy.name +
+        "!"
+    );
+
+    updateCombatUI();
+
+}
+
+
+function updateCombatUI() {
+
+    const enemy = game.combat.enemy;
+
+    if (!enemy) return;
+
+    const playerPercent =
+        Math.max(0, game.player.hp / game.player.maxHp * 100);
+
+    const enemyPercent =
+        Math.max(0, enemy.hp / enemy.maxHp * 100);
+
+    document.getElementById("combatPlayerBar").style.width =
+        playerPercent + "%";
+
+    document.getElementById("combatEnemyBar").style.width =
+        enemyPercent + "%";
+
+    document.getElementById("combatPlayerHP").textContent =
+        Math.max(0, game.player.hp) +
+        " / " +
+        game.player.maxHp +
+        " HP";
+
+    document.getElementById("combatEnemyHP").textContent =
+        Math.max(0, enemy.hp) +
+        " / " +
+        enemy.maxHp +
+        " HP";
+
+}
+
+
+function combatLog(text) {
+
+    const log = document.getElementById("combatLog");
+
+    log.innerHTML += "<div>" + text + "</div>";
+
+    log.scrollTop = log.scrollHeight;
+
+}
+
+
+function combatAttack() {
+
+    if (!game.combat.active) return;
+
+    let damage =
+        game.player.attack +
+        Math.floor(Math.random() * 8);
+
+    if (game.player.skills.attack) {
+        damage += 8;
+    }
+
+    game.combat.enemy.hp -= damage;
+
+    combatLog(
+        "You attack for " +
+        damage +
+        " damage."
+    );
+
+    enemyTurn();
+
+}
+
+
+function combatHeavyAttack() {
+
+    if (!game.combat.active) return;
+
+    if (game.player.mp < 10) {
+
+        combatLog("Not enough MP.");
+
+        return;
+    }
+
+    game.player.mp -= 10;
+
+    let damage =
+        game.player.attack * 2 +
+        Math.floor(Math.random() * 10);
+
+    game.combat.enemy.hp -= damage;
+
+    combatLog(
+        "Heavy Attack deals " +
+        damage +
+        " damage!"
+    );
+
+    enemyTurn();
+
+    updateHUD();
+
+}
+
+
+function combatHeal() {
+
+    if (!game.combat.active) return;
+
+    if (game.player.mp < 10) {
+
+        combatLog("Not enough MP.");
+
+        return;
+    }
+
+    game.player.mp -= 10;
+
+    const amount = 25;
+
+    game.player.hp =
+        Math.min(
+            game.player.maxHp,
+            game.player.hp + amount
+        );
+
+    combatLog(
+        "You recover " +
+        amount +
+        " HP."
+    );
+
+    enemyTurn();
+
+    updateHUD();
+
+}
+
+
+function enemyTurn() {
+
+    const enemy = game.combat.enemy;
+
+    if (enemy.hp <= 0) {
+
+        winCombat();
+
+        return;
+
+    }
+
+    let damage =
+        8 +
+        Math.floor(Math.random() * 8);
+
+    if (game.player.skills.defense) {
+        damage -= 4;
+    }
+
+    damage = Math.max(1, damage - game.player.defense / 3);
+
+    game.player.hp -= Math.floor(damage);
+
+    combatLog(
+        enemy.name +
+        " attacks you for " +
+        Math.floor(damage) +
+        " damage."
+    );
+
+    if (game.player.hp <= 0) {
+
+        game.player.hp = 1;
+
+        combatLog(
+            "You barely survive. Hope keeps you standing."
+        );
+
+    }
+
+    updateCombatUI();
+
+    updateHUD();
+
+}
+
+
+function winCombat() {
+
+    const enemy = game.combat.enemy;
+
+    combatLog(
+        "You defeated " +
+        enemy.name +
+        "!"
+    );
+
+    gainXP(50);
+
+    game.player.gold += 25;
+
+    game.player.reputation += 5;
+
+    const element =
+        document.getElementById("enemy-" + enemy.id);
+
+    if (element) {
+        element.remove();
+    }
+
+    enemies =
+        enemies.filter(e => e.id !== enemy.id);
+
+    game.combat.active = false;
+
+    game.combat.enemy = null;
+
+    setTimeout(function() {
+
+        document.getElementById("combat").style.display = "none";
+
+        if (enemies.length === 0) {
+
+            finishChapter();
+
+        }
+
+    }, 900);
+
+}
+
+
+function combatRun() {
+
+    combatLog(
+        "You escaped from the battle."
+    );
+
+    game.combat.active = false;
+
+    game.combat.enemy = null;
+
+    document.getElementById("combat").style.display = "none";
+
+}
+
+
+/* ============================================================
+   ATTACK NEAREST
+============================================================ */
+
+function attackNearest() {
+
+    if (!enemies.length) {
+
+        notify("There are no enemies nearby.");
+
+        return;
+
+    }
+
+    let closest = null;
+
+    let distance = Infinity;
+
+    enemies.forEach(enemy => {
+
+        const dx =
+            game.player.x - enemy.x;
+
+        const dy =
+            game.player.y - enemy.y;
+
+        const d =
+            Math.sqrt(dx*dx + dy*dy);
+
+        if (d < distance) {
+
+            distance = d;
+
+            closest = enemy;
+
+        }
+
+    });
+
+    if (closest && distance < 18) {
+
+        startCombat(closest);
+
+    } else {
+
+        notify("Move closer to an enemy.");
+
+    }
+
+}
+
+
+/* ============================================================
+   FINISH CHAPTER
+============================================================ */
+
+function finishChapter() {
+
+    game.questStage = 5;
+
+    updateQuest();
+
+    game.player.reputation += 20;
+
+    gainXP(100);
+
+    setTimeout(function() {
+
+        showStory();
+
+        notify(
+            "Chapter 3 complete!"
+        );
+
+    }, 400);
+
+}
+
+
+/* ============================================================
+   INVENTORY
+============================================================ */
+
+function openInventory() {
+
+    document.getElementById("inventoryModal").style.display =
+        "flex";
+
+}
+
+
+function useItem(item) {
+
+    notify(
+        item +
+        " inspected."
+    );
+
+}
+
+
+function usePotion() {
+
+    game.player.hp =
+        Math.min(
+            game.player.maxHp,
+            game.player.hp + 30
+        );
+
+    notify("Healing Potion restored 30 HP.");
+
+    updateHUD();
+
+}
+
+
+function equipSword() {
+
+    game.player.equipment.weapon =
+        "Training Sword";
+
+    game.player.attack += 10;
+
+    notify(
+        "Training Sword equipped. +10 Attack."
+    );
+
+    updateHUD();
+
+}
+
+
+/* ============================================================
+   SKILLS
+============================================================ */
+
+function openSkills() {
+
+    document.getElementById("skillsModal").style.display =
+        "flex";
+
+    document.getElementById("skillPoints").textContent =
+        game.player.skillPoints;
+
+}
+
+
+function buySkill(skill) {
+
+    if (game.player.skills[skill]) {
+
+        notify("Skill already learned.");
+
+        return;
+
+    }
+
+    if (game.player.skillPoints <= 0) {
+
+        notify("You need a Skill Point.");
+
+        return;
+
+    }
+
+    game.player.skillPoints--;
+
+    game.player.skills[skill] = true;
+
+    if (skill === "attack") {
+
+        game.player.attack += 8;
+
+    }
+
+    if (skill === "defense") {
+
+        game.player.defense += 5;
+
+    }
+
+    if (skill === "honest") {
+
+        game.player.reputation += 10;
+
+    }
+
+    if (skill === "hope") {
+
+        game.player.maxHp += 10;
+
+        game.player.hp += 10;
+
+    }
+
+    notify(
+        "Skill learned: " +
+        skill
+    );
+
+    openSkills();
+
+    updateHUD();
+
+}
+
+
+/* ============================================================
+   STORY
+============================================================ */
+
+function showStory() {
+
+    document.getElementById("storyModal").style.display =
+        "flex";
+
+}
+
+
+/* ============================================================
+   PLAYER STATS
+============================================================ */
+
+function showStats() {
+
+    document.getElementById("levelValue").textContent =
+        game.player.level;
+
+    document.getElementById("classValue").textContent =
+        game.player.class;
+
+    document.getElementById("attackValue").textContent =
+        game.player.attack;
+
+    document.getElementById("defenseValue").textContent =
+        game.player.defense;
+
+    document.getElementById("repValue").textContent =
+        game.player.reputation;
+
+    document.getElementById("goldValue").textContent =
+        game.player.gold;
+
+    document.getElementById("statsModal").style.display =
+        "flex";
+
+}
+
+
+/* ============================================================
+   CLOSE MODALS
+============================================================ */
+
+function closeModal(id) {
+
+    document.getElementById(id).style.display =
+        "none";
+
+}
+
+
+/* ============================================================
+   HUD
+============================================================ */
+
+function updateHUD() {
+
+    const hpPercent =
+        game.player.hp /
+        game.player.maxHp *
+        100;
+
+    const xpPercent =
+        game.player.xp /
+        game.player.xpNeeded *
+        100;
+
+    const mpPercent =
+        game.player.mp /
+        game.player.maxMp *
+        100;
+
+    document.getElementById("hpBar").style.width =
+        hpPercent + "%";
+
+    document.getElementById("xpBar").style.width =
+        xpPercent + "%";
+
+    document.getElementById("mpBar").style.width =
+        mpPercent + "%";
+
+    document.getElementById("hpText").textContent =
+        Math.max(0, game.player.hp) +
+        " / " +
+        game.player.maxHp;
+
+    document.getElementById("xpText").textContent =
+        game.player.xp +
+        " / " +
+        game.player.xpNeeded;
+
+    document.getElementById("mpText").textContent =
+        game.player.mp +
+        " / " +
+        game.player.maxMp;
+
+}
+
+
+/* ============================================================
+   NOTIFICATIONS
+============================================================ */
+
+let notificationTimer = null;
+
+
+function notify(message) {
+
+    const box =
+        document.getElementById("notification");
+
+    box.textContent = message;
+
+    box.classList.add("show");
+
+    clearTimeout(notificationTimer);
+
+    notificationTimer =
+        setTimeout(function() {
+
+            box.classList.remove("show");
+
+        }, 2200);
+
+}
+
+
+/* ============================================================
+   INITIALIZATION
+============================================================ */
+
+updatePlayerPosition();
+
+updateHUD();
+
+
+/* ============================================================
+   WORLD ANIMATION
+============================================================ */
+
+let worldTime = 0;
+
+
+function animateWorld() {
+
+    worldTime += 0.01;
+
+    const player =
+        document.getElementById("player");
+
+    if (game.started) {
+
+        const bob =
+            Math.sin(worldTime * 5) * 1.5;
+
+        player.style.marginTop =
+            bob + "px";
+
+    }
+
+    requestAnimationFrame(animateWorld);
+
+}
+
+animateWorld();
+
+
+/* ============================================================
+   RANDOM WORLD EVENTS
+============================================================ */
+
+setInterval(function() {
+
+    if (!game.started) return;
+
+    if (Math.random() < .25) {
+
+        const messages = [
+
+            "You hear students talking about friendship.",
+
+            "The school bell rings in the distance.",
+
+            "A strange shadow moves near the school.",
+
+            "Someone whispers: 'Don't pretend to be a friend.'",
+
+            "The road ahead seems quiet.",
+
+            "You remember the importance of trust."
+
+        ];
+
+        const message =
+            messages[
+                Math.floor(
+                    Math.random() *
+                    messages.length
+                )
+            ];
+
+        notify(message);
+
+    }
+
+}, 9000);
+
+
+/* ============================================================
+   CLICK WORLD TO MOVE
+============================================================ */
+
+document.getElementById("world").addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target.closest(".npc") ||
+            event.target.closest(".enemy")
+        ) {
+            return;
+        }
+
+        const rect =
+            this.getBoundingClientRect();
+
+        const x =
+            (event.clientX - rect.left) /
+            rect.width *
+            100;
+
+        const y =
+            (event.clientY - rect.top) /
+            rect.height *
+            100;
+
+        game.player.x =
+            Math.max(
+                8,
+                Math.min(92,x)
+            );
+
+        game.player.y =
+            Math.max(
+                38,
+                Math.min(88,y)
+            );
+
+        updatePlayerPosition();
+
+    }
+);
+
+
+/* ============================================================
+   CAMERA / WORLD EFFECT
+============================================================ */
+
+document.addEventListener(
+    "mousemove",
+    function(event) {
+
+        if (!game.started) return;
+
+        const x =
+            (event.clientX /
+            window.innerWidth -
+            .5) * 2;
+
+        const y =
+            (event.clientY /
+            window.innerHeight -
+            .5) * 2;
+
+        const terrain =
+            document.getElementById("terrain");
+
+        terrain.style.marginLeft =
+            (-x * 10) + "px";
+
+        terrain.style.marginTop =
+            (-y * 7) + "px";
+
+    }
+);
+
+
+/* ============================================================
+   AUTO SAVE
+============================================================ */
+
+function saveGame() {
+
+    const data =
+        JSON.stringify(game);
+
+    localStorage.setItem(
+        "pretenderSave",
+        data
+    );
+
+}
+
+
+function loadGame() {
+
+    const saved =
+        localStorage.getItem(
+            "pretenderSave"
+        );
+
+    if (!saved) return;
+
+    try {
+
+        const data =
+            JSON.parse(saved);
+
+        Object.assign(
+            game.player,
+            data.player
+        );
+
+        game.questStage =
+            data.questStage || 0;
+
+        game.talked =
+            data.talked || game.talked;
+
+        updateHUD();
+
+        updateQuest();
+
+    }
+
+    catch(error) {
+
+        console.log(
+            "Save data could not be loaded."
+        );
+
+    }
+
+}
+
+
+setInterval(
+    saveGame,
+    5000
+);
+
+
+/* ============================================================
+   LOAD SAVE
+============================================================ */
+
+loadGame();
+
+
+/* ============================================================
+   RESET SAVE
+============================================================ */
+
+window.resetGame = function() {
+
+    localStorage.removeItem(
+        "pretenderSave"
+    );
+
+    location.reload();
+
+};
+
+
+/* ============================================================
+   QUEST HELP
+============================================================ */
+
+window.help = function() {
+
+    notify(
+        "WASD / Arrow Keys = Move • E = Talk • I = Inventory • K = Skills • Q = Story"
+    );
+
+};
+
+
+/* ============================================================
+   GAME CLASS SYSTEM
+============================================================ */
+
+function changeClass(newClass) {
+
+    game.player.class =
+        newClass;
+
+    if (newClass === "Warrior") {
+
+        game.player.attack += 12;
+
+    }
+
+    if (newClass === "Guardian") {
+
+        game.player.defense += 10;
+
+    }
+
+    if (newClass === "Scholar") {
+
+        game.player.mp += 15;
+
+        game.player.maxMp += 15;
+
+    }
+
+    if (newClass === "Companion") {
+
+        game.player.reputation += 10;
+
+    }
+
+    notify(
+        "Class changed to " +
+        newClass
+    );
+
+    updateHUD();
+
+}
+
+
+/* ============================================================
+   OPTIONAL CLASS MENU
+============================================================ */
+
+window.showClasses = function() {
+
+    const choice =
+        prompt(
+            "Choose class: Warrior, Guardian, Scholar, Companion"
+        );
+
+    if (!choice) return;
+
+    const valid = [
+
+        "Warrior",
+        "Guardian",
+        "Scholar",
+        "Companion"
+
+    ];
+
+    const found =
+        valid.find(
+            c =>
+            c.toLowerCase() ===
+            choice.toLowerCase()
+        );
+
+    if (found) {
+
+        changeClass(found);
+
+    } else {
+
+        notify("Invalid class.");
+
+    }
+
+};
+
+
+/* ============================================================
+   MORAL LESSON EVENT
+============================================================ */
+
+function moralLesson() {
+
+    showStory();
+
+    notify(
+        "Moral Lesson unlocked."
+    );
+
+}
+
+
+/* ============================================================
+   DEBUG / FULL GAME SYSTEM SUMMARY
+============================================================ */
+
+/*
+
+PLAYER CHARACTER
+- Level
+- XP
+- HP
+- MP
+- Attack
+- Defense
+- Gold
+- Reputation
+- Class
+- Equipment
+- Skills
+
+3D WORLD / MAP
+- Sky
+- Terrain
+- Roads
+- School
+- Hall
+- Trees
+- NPC locations
+- Minimap
+
+CAMERA & CONTROLS
+- WASD
+- Arrow keys
+- Mouse world movement
+- Camera/parallax movement
+
+NPCs
+- Mirjah
+- Jaba
+- Schen
+- Dejavu
+- Mencock
+- Levshnok
+- Teacher
+
+QUESTS
+- The Pretender
+- Broken Trust
+- Reflection
+- Hope
+- Chapter Complete
+
+COMBAT
+- Normal Attack
+- Heavy Attack
+- Healing
+- Escape
+- Enemy turns
+- Damage
+- HP
+- MP
+
+ENEMIES
+- Shadow of Distrust
+- Pretender Boss
+
+INVENTORY
+- Friendship Badge
+- School Notebook
+- Healing Potion
+- Training Sword
+- Trust Crystal
+
+HUD
+- HP
+- XP
+- MP
+- Quest
+- Minimap
+- Action bar
+
+PROGRESSION
+- Leveling
+- XP
+- Skill points
+- Skill tree
+- Classes
+
+STORY
+- March 3 2017
+- Chapter 3
+- The Pretender
+- By Douglas Willats Wilamer
+- Full supplied story
+- Moral Lesson
+
+*/
+
+</script>
+
+</body>
+</html>
